@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <!-- Favicon-->
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <!-- Custom Google font-->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
+        <!-- Bootstrap icons-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="css/styles.css" rel="stylesheet" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Conversor de magnitudes fisicas</title>
+
+  <style>
+    :root{--bg:#f4f7fb;--card:#ffffff;--accent:#2563eb;--muted:#6b7280}
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:var(--bg); margin:0; padding:32px; color:#0f172a}
+    .wrap{max-width:980px;margin:0 auto}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
+
+    .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    .full{grid-column:1/-1}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    select,input{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef8;font-size:14px}
+    .row{display:flex;gap:8px}
+    button{background:var(--accent);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+    .result{font-size:18px;font-weight:600}
+    footer{margin-top:12px;color:var(--muted);font-size:13px}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}.row{flex-direction:column}}
+  </style>
+</head>
+<body>
+ <!-- Navigation-->
+                            <nav class="navbar navbar-expand-lg navbar-light bg-white py-1">
+                    <div class="container px-5">
+                           <span class="fw-bolder text-gradient d-inline">SISTEMA DE CONVERSOR DE MAGNITUDES</span>
+                        </a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#navbarSupportedContent" 
+                                aria-controls="navbarSupportedContent" 
+                                aria-expanded="false" 
+                                aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
+                                <li class="nav-item"><a class="nav-link" href="index.html">MRU-MRUV</a></li>
+                                <li class="nav-item"><a class="nav-link" href="magnitudesfisicas.html">CONVERTIDOR DE MAGNITUDES</a></li>
+                                <li class="nav-item"><a class="nav-link" href="fuerza resultante.html">VECTORES</a></li>
+                               
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+<hr>
+
+  <div class="wrap">
+    <header>
+      <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:12px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L20 7v6c0 5-4 9-8 9s-8-4-8-9V7l8-5z" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1>Conversor de magnitudes físicas</h1>
+        <p class="lead">Convierte entre unidades de longitud, masa, tiempo, temperatura, área, volumen, velocidad y energía.</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="grid">
+        <div>
+          <label for="category">Categoría</label>
+          <select id="category"></select>
+        </div>
+
+        <div>
+          <label for="mode">Modo</label>
+          <select id="mode"><option value="direct">Directo (de a)</option><option value="quick">Rápido (ejemplos)</option></select>
+        </div>
+
+        <div>
+          <label for="fromUnit">De</label>
+          <select id="fromUnit"></select>
+        </div>
+
+        <div>
+          <label for="toUnit">A</label>
+          <select id="toUnit"></select>
+        </div>
+
+        <div>
+          <label for="value">Valor</label>
+          <input id="value" type="number" step="any" value="1">
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <div class="row">
+            <button id="convert">Convertir</button>
+            <button id="swap" title="Intercambiar unidades">⇄</button>
+            <button id="reset">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="full">
+          <label>Resultado</label>
+          <div class="card" id="output" style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="result" id="resultText">—</div>
+              <div style="color:var(--muted);font-size:13px;margin-top:6px" id="explain">Explicación</div>
+            </div>
+            <div>
+              <button id="copy">Copiar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer>Listo para usar en cualquier navegador moderno. Puedes editar unidades en el código.</footer>
+    </section>
+  </div>
+
+  <script>
+    // Unidades y factores base (SI). Cada categoría tiene unidad base y conversiones relativas a esa base.
+    const CATEGORIES = {
+      longitud: {
+        name: 'Longitud', base: 'm', units: {
+          mm: {name:'Milímetro', to_base: v=>v/1000, from_base: v=>v*1000},
+          cm: {name:'Centímetro', to_base: v=>v/100, from_base: v=>v*100},
+          m:  {name:'Metro', to_base: v=>v, from_base: v=>v},
+          km: {name:'Kilómetro', to_base: v=>v*1000, from_base: v=>v/1000},
+          in: {name:'Pulgada', to_base: v=>v*0.0254, from_base: v=>v/0.0254},
+          ft: {name:'Pie', to_base: v=>v*0.3048, from_base: v=>v/0.3048}
+        }
+      },
+
+      masa: {
+        name:'Masa', base:'kg', units:{
+          mg:{name:'Miligramo', to_base:v=>v/1e6, from_base:v=>v*1e6},
+          g:{name:'Gramo', to_base:v=>v/1000, from_base:v=>v*1000},
+          kg:{name:'Kilogramo', to_base:v=>v, from_base:v=>v},
+          t:{name:'Tonelada (métrica)', to_base:v=>v*1000, from_base:v=>v/1000},
+          lb:{name:'Libra', to_base:v=>v*0.45359237, from_base:v=>v/0.45359237}
+        }
+      },
+
+      tiempo: {
+        name:'Tiempo', base:'s', units:{
+          ms:{name:'Milisegundo', to_base:v=>v/1000, from_base:v=>v*1000},
+          s:{name:'Segundo', to_base:v=>v, from_base:v=>v},
+          min:{name:'Minuto', to_base:v=>v*60, from_base:v=>v/60},
+          h:{name:'Hora', to_base:v=>v*3600, from_base:v=>v/3600},
+          d:{name:'Día', to_base:v=>v*86400, from_base:v=>v/86400}
+        }
+      },
+
+      temperatura: {
+        name:'Temperatura', base:'K', units:{
+          C:{name:'Celsius (°C)', to_base:v=>v+273.15, from_base:v=>v-273.15},
+          F:{name:'Fahrenheit (°F)', to_base:v=> (v-32)*(5/9)+273.15, from_base:v=> (v-273.15)*(9/5)+32},
+          K:{name:'Kelvin (K)', to_base:v=>v, from_base:v=>v}
+        }
+      },
+
+      area: {
+        name:'Área', base:'m2', units:{
+          m2:{name:'Metro cuadrado', to_base:v=>v, from_base:v=>v},
+          cm2:{name:'Centímetro cuadrado', to_base:v=>v/10000, from_base:v=>v*10000},
+          km2:{name:'Kilómetro cuadrado', to_base:v=>v*1e6, from_base:v=>v/1e6},
+          ha:{name:'Hectárea', to_base:v=>v*10000, from_base:v=>v/10000},
+          acre:{name:'Acre', to_base:v=>v*4046.8564224, from_base:v=>v/4046.8564224}
+        }
+      },
+
+      volumen: {
+        name:'Volumen', base:'m3', units:{
+          m3:{name:'Metro cúbico', to_base:v=>v, from_base:v=>v},
+          L:{name:'Litro', to_base:v=>v/1000, from_base:v=>v*1000},
+          mL:{name:'Mililitro', to_base:v=>v/1e6, from_base:v=>v*1e6},
+          ft3:{name:'Pie cúbico', to_base:v=>v*0.028316846592, from_base:v=>v/0.028316846592}
+        }
+      },
+
+      velocidad: {
+        name:'Velocidad', base:'m/s', units:{
+          'm/s':{name:'Metro/segundo', to_base:v=>v, from_base:v=>v},
+          kmh:{name:'Kilómetro/hora', to_base:v=>v/3.6, from_base:v=>v*3.6},
+          mph:{name:'Milla/hora', to_base:v=>v*0.44704, from_base:v=>v/0.44704}
+        }
+      },
+
+      energia: {
+        name:'Energía', base:'J', units:{
+          J:{name:'Joule', to_base:v=>v, from_base:v=>v},
+          kJ:{name:'Kilojoule', to_base:v=>v*1000, from_base:v=>v/1000},
+          cal:{name:'Caloría (cal)', to_base:v=>v*4.184, from_base:v=>v/4.184},
+          kWh:{name:'Kilovatio-hora', to_base:v=>v*3.6e6, from_base:v=>v/3.6e6}
+        }
+      }
+    };
+
+    // Inicialización DOM
+    const categorySel = document.getElementById('category');
+    const fromSel = document.getElementById('fromUnit');
+    const toSel = document.getElementById('toUnit');
+    const valueInp = document.getElementById('value');
+    const convertBtn = document.getElementById('convert');
+    const resultText = document.getElementById('resultText');
+    const explain = document.getElementById('explain');
+    const swapBtn = document.getElementById('swap');
+    const resetBtn = document.getElementById('reset');
+    const copyBtn = document.getElementById('copy');
+
+    function populateCategories(){
+      categorySel.innerHTML = '';
+      for(const key of Object.keys(CATEGORIES)){
+        const opt = document.createElement('option');
+        opt.value = key; opt.textContent = CATEGORIES[key].name;
+        categorySel.appendChild(opt);
+      }
+    }
+
+    function populateUnits(catKey){
+      const cat = CATEGORIES[catKey];
+      fromSel.innerHTML = '';
+      toSel.innerHTML = '';
+      for(const u of Object.keys(cat.units)){
+        const o1 = document.createElement('option'); o1.value = u; o1.textContent = `${u} — ${cat.units[u].name}`;
+        const o2 = o1.cloneNode(true);
+        fromSel.appendChild(o1); toSel.appendChild(o2);
+      }
+      fromSel.value = Object.keys(cat.units)[0];
+      toSel.value = Object.keys(cat.units)[1] || Object.keys(cat.units)[0];
+    }
+
+    function convert(){
+      const catKey = categorySel.value;
+      const cat = CATEGORIES[catKey];
+      const from = fromSel.value; const to = toSel.value;
+      let val = Number(valueInp.value);
+      if(isNaN(val)){ resultText.textContent = 'Valor no válido'; return; }
+
+      // Para temperatura: usar funciones especiales ya definidas en units
+      const toBase = cat.units[from].to_base;
+      const fromBase = cat.units[to].from_base;
+      const baseVal = toBase(val);
+      const outVal = fromBase(baseVal);
+
+      const outStr = Number.isFinite(outVal) ? outVal : NaN;
+      resultText.textContent = `${outStr} ${to}`;
+      explain.textContent = `(${valueInp.value} ${from}) → ${baseVal} ${cat.base} → ${outVal} ${to}`;
+    }
+
+    convertBtn.addEventListener('click', ()=>convert());
+    swapBtn.addEventListener('click', ()=>{
+      const a = fromSel.value; fromSel.value = toSel.value; toSel.value = a; convert();
+    });
+    resetBtn.addEventListener('click', ()=>{ valueInp.value=''; resultText.textContent='—'; explain.textContent='Explicación'; });
+    copyBtn.addEventListener('click', ()=>{ navigator.clipboard.writeText(resultText.textContent).then(()=>{ copyBtn.textContent='Copiado'; setTimeout(()=>copyBtn.textContent='Copiar',900); }); });
+
+    categorySel.addEventListener('change', ()=>populateUnits(categorySel.value));
+
+    // Inicial
+    populateCategories(); populateUnits(categorySel.value);
+
+    // Atajo convertir con Enter
+    valueInp.addEventListener('keydown', (e)=>{ if(e.key==='Enter') convert(); });
+
+    // Ejemplo avanzado: funcion para agregar unidad personalizada (puedes modificar)
+    function addCustomUnit(category, code, name, to_base_fn, from_base_fn){
+      if(!CATEGORIES[category]){ console.warn('Categoría no existe'); return; }
+      CATEGORIES[category].units[code] = { name, to_base: to_base_fn, from_base: from_base_fn };
+      if(categorySel.value===category) populateUnits(category);
+    }
+
+    // Ejemplo: agregar unidad personalizada (descomentarlo si quieres probar)
+    // addCustomUnit('longitud','league',{name:'League'}, v=>v*4828.032, v=>v/4828.032);
+  </script>
+</body>
+</html>
