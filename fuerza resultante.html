@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sistema: Fuerza Resultante (Vectores)</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:16px;background:#f5f7fb;color:#111}
+    h1{font-size:20px;margin:0 0 8px}
+    .row{display:flex;gap:12px;align-items:flex-start}
+    .controls{width:360px;background:#fff;padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    label{display:block;font-size:13px;margin-top:8px}
+    input[type=number]{width:100%;padding:6px;border-radius:6px;border:1px solid #d0d7e3}
+    button{margin-top:8px;padding:8px 10px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}
+    #canvasWrap{flex:1;background:#fff;padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;flex-direction:row;gap:16px}
+    canvas{width:70%;height:600px;border-radius:6px;background:#ffffff}
+    .tableWrap{width:30%;overflow-y:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border-bottom:1px solid #ddd;padding:6px;text-align:center}
+    th{background:#f0f4ff}
+    .vector-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed #eee}
+    .small{font-size:13px;color:#444}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 8px;border-radius:999px;background:#f0f4ff}
+  </style>
+</head>
+<body>
+  <h1>Sistema para calcular fuerza resultante (vectores)</h1>
+  <div class="row">
+    <div class="controls">
+      <label>Magnitud (N)</label>
+      <input id="vmag" type="number" step="any" value="60">
+      <label>Ángulo (°) (0→derecha, 90→arriba)</label>
+      <input id="vang" type="number" step="any" value="30">
+      <label>Nombre (opcional)</label>
+      <input id="vname" type="text" placeholder="Fuerza 1">
+
+      <button id="addBtn">Agregar vector</button>
+      <button id="clearBtn" style="background:#ef4444">Borrar todos</button>
+
+      <div style="margin-top:12px">
+        <strong>Vectores añadidos</strong>
+        <div id="vectorsList"></div>
+      </div>
+
+      <div style="margin-top:10px">
+        <strong>Resultado numérico</strong>
+        <div class="small">Suma X: <span id="sumx">0</span> N</div>
+        <div class="small">Suma Y: <span id="sumy">0</span> N</div>
+        <div class="small">Magnitud: <span id="sumMag">0</span> N</div>
+        <div class="small">Ángulo: <span id="sumAng">0</span> °</div>
+      </div>
+
+      <div class="legend">
+        <div class="chip">Ejes: gris</div>
+        <div class="chip">Vectores: colores distintos</div>
+        <div class="chip">Resultante: negro</div>
+      </div>
+    </div>
+
+    <div id="canvasWrap">
+      <canvas id="canvas" width="1000" height="700"></canvas>
+      <div class="tableWrap">
+        <table id="vectorTable">
+          <thead>
+            <tr><th>Vector</th><th>Fx (N)</th><th>Fy (N)</th><th>Módulo (N)</th><th>Ángulo (°)</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const randColor = ()=>{
+      const hues=["#ef476f","#ffd166","#06d6a0","#118ab2","#073b4c","#9b5de5","#f15bb5","#00bbf9"]
+      return hues[Math.floor(Math.random()*hues.length)]
+    }
+
+    const vectors=[]
+    const canvas = document.getElementById('canvas')
+    const ctx = canvas.getContext('2d')
+    const DPR = window.devicePixelRatio||1
+    canvas.width = canvas.clientWidth * DPR
+    canvas.height = canvas.clientHeight * DPR
+    ctx.scale(DPR,DPR)
+
+    let originX = canvas.clientWidth/2, originY = canvas.clientHeight/2
+    let scale = 4
+
+    function drawAxes(){
+      ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight)
+      ctx.save()
+      ctx.lineWidth=1
+      ctx.strokeStyle='#c7cbd3'
+      ctx.beginPath(); ctx.moveTo(0,originY); ctx.lineTo(canvas.clientWidth,originY); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(originX,0); ctx.lineTo(originX,canvas.clientHeight); ctx.stroke()
+      ctx.restore()
+    }
+
+    function drawArrow(x1,y1,x2,y2,color,thickness=3){
+      ctx.save()
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.lineWidth=thickness; ctx.strokeStyle=color; ctx.stroke()
+      const angle = Math.atan2(y2-y1,x2-x1)
+      const headLen = 10
+      ctx.beginPath();
+      ctx.moveTo(x2,y2);
+      ctx.lineTo(x2 - headLen*Math.cos(angle - Math.PI/6), y2 - headLen*Math.sin(angle - Math.PI/6));
+      ctx.lineTo(x2 - headLen*Math.cos(angle + Math.PI/6), y2 - headLen*Math.sin(angle + Math.PI/6));
+      ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+      ctx.restore()
+    }
+
+    function toCanvasCoords(vx,vy){
+      const px = originX + vx*scale
+      const py = originY - vy*scale
+      return {x:px,y:py}
+    }
+
+    function render(){
+      drawAxes()
+      vectors.forEach(vec=>{
+        const start = toCanvasCoords(vec.x0||0,vec.y0||0)
+        const end = toCanvasCoords(vec.x,vec.y)
+        drawArrow(start.x,start.y,end.x,end.y,vec.color,3)
+        ctx.fillStyle = '#222'
+        ctx.font='12px sans-serif'
+        ctx.fillText(vec.name||vec.id, end.x+6, end.y-6)
+      })
+      const rx = vectors.reduce((s,v)=>s+v.x,0)
+      const ry = vectors.reduce((s,v)=>s+v.y,0)
+      if(vectors.length>0){
+        const start = toCanvasCoords(0,0)
+        const end = toCanvasCoords(rx,ry)
+        drawArrow(start.x,start.y,end.x,end.y,'#111',4)
+      }
+    }
+
+    function updateNumbers(){
+      const sx = vectors.reduce((s,v)=>s+v.x,0)
+      const sy = vectors.reduce((s,v)=>s+v.y,0)
+      const mag = Math.hypot(sx,sy)
+      const ang = (Math.atan2(sy,sx)*180/Math.PI+360)%360
+      document.getElementById('sumx').innerText = round(sx)
+      document.getElementById('sumy').innerText = round(sy)
+      document.getElementById('sumMag').innerText = round(mag)
+      document.getElementById('sumAng').innerText = round(ang)
+      updateTable()
+    }
+
+    function round(n){return Math.round(n*100)/100}
+
+    function refresh(){
+      render(); updateNumbers(); renderList();
+    }
+
+    function renderList(){
+      const container = document.getElementById('vectorsList')
+      container.innerHTML=''
+      vectors.forEach((v,i)=>{
+        const div=document.createElement('div'); div.className='vector-item'
+        div.innerHTML = `<div><span style="display:inline-block;width:12px;height:12px;background:${v.color};border-radius:3px;margin-right:8px"></span><strong>${v.name||('V'+(i+1))}</strong></div><div><button data-i="${i}" style="background:#ef4444;padding:6px 8px;border-radius:6px;border:0;color:#fff">X</button></div>`
+        container.appendChild(div)
+        div.querySelector('button').addEventListener('click', e=>{vectors.splice(i,1); refresh()})
+      })
+    }
+
+    function updateTable(){
+      const tbody=document.querySelector('#vectorTable tbody')
+      tbody.innerHTML=''
+      vectors.forEach((v,i)=>{
+        const mag=Math.hypot(v.x,v.y)
+        const ang=(Math.atan2(v.y,v.x)*180/Math.PI+360)%360
+        const row=document.createElement('tr')
+        row.innerHTML=`<td>${v.name||('V'+(i+1))}</td><td>${round(v.x)}</td><td>${round(v.y)}</td><td>${round(mag)}</td><td>${round(ang)}</td>`
+        tbody.appendChild(row)
+      })
+    }
+
+    document.getElementById('addBtn').addEventListener('click', ()=>{
+      const name = document.getElementById('vname').value || undefined
+      const mag = parseFloat(document.getElementById('vmag').value) || 0
+      const ang = parseFloat(document.getElementById('vang').value) || 0
+      const rad = ang*Math.PI/180
+      const x = mag*Math.cos(rad)
+      const y = mag*Math.sin(rad)
+      const vec = {id: vectors.length+1, name: name, x:x, y:y, color: randColor()}
+      vectors.push(vec)
+      document.getElementById('vname').value=''
+      refresh()
+    })
+
+    document.getElementById('clearBtn').addEventListener('click', ()=>{vectors.length=0; refresh()})
+
+    let isP=false, last=null
+    canvas.addEventListener('wheel', e=>{
+      e.preventDefault()
+      const delta = Math.sign(e.deltaY)
+      if(delta>0) scale = Math.max(1, scale*0.9)
+      else scale = Math.min(40, scale*1.1)
+      refresh()
+    })
+    canvas.addEventListener('mousedown', e=>{isP=true; last={x:e.clientX,y:e.clientY}})
+    window.addEventListener('mousemove', e=>{if(!isP) return; const dx=e.clientX-last.x, dy=e.clientY-last.y; originX+=dx; originY+=dy; last={x:e.clientX,y:e.clientY}; refresh()})
+    window.addEventListener('mouseup', ()=>{isP=false})
+
+    vectors.push({id:1,name:'F1',x:50,y:30,color:randColor()})
+    vectors.push({id:2,name:'F2',x:-20,y:70,color:randColor()})
+    refresh()
+
+    window.addEventListener('resize', ()=>{
+      canvas.width = canvas.clientWidth * DPR
+      canvas.height = canvas.clientHeight * DPR
+      ctx.setTransform(1,0,0,1,0,0)
+      ctx.scale(DPR,DPR)
+      originX = canvas.clientWidth/2; originY = canvas.clientHeight/2
+      refresh()
+    })
+  </script>
+</body>
+</html>
