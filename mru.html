@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulador MRU</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <header>
+    <div class="header-content">
+      <div class="title">SIMULADORES DE FÍSICA</div>
+      <nav>
+        <a href="index.html">Inicio</a>
+        <a class="active" href="mru.html">MRU</a>
+        <a href="mruv.html">MRUV</a>
+        <a href="magnitudesfisicas.html">CONVERSOR DE MAGNITUDES</a>
+        <a href="fuerzaresultante.html">FUERZA RESULTANTE</a>
+        <a href="desarrolladores.html">Desarrolladores</a>
+      </nav>
+    </div>
+    <img src="img/logoitca.png" alt="logoitca" class="header-logo">
+  </header>
+
+  <main>
+   <!-- MRU -->
+  <div id="mru" class="section" style="display:none">
+    <div class="row">
+      <div class="card">
+        <h3>Ingresa los datos (MRU)</h3>
+        <label>Posición inicial x₀ (m)</label><input id="mru_x0" type="number" step="any" value="0">
+        <label>Posición final x_f (m)</label><input id="mru_xf" type="number" step="any" value="10">
+        <label>Tiempo inicial t₀ (s)</label><input id="mru_t0" type="number" step="any" value="0">
+        <label>Tiempo final t_f (s)</label><input id="mru_tf" type="number" step="any" value="5">
+        <label>Velocidad (m/s)</label><input id="mru_v" type="number" step="any" value="">
+        <button id="btnCalcMRU" onclick="calcMRU()">Calcular</button>
+        <button class="secondary" onclick="resetAll()">Limpiar</button>
+        <button id="btnStartMRU" onclick="startSimMRU()" disabled>Iniciar simulación</button>
+      </div>
+
+      <div class="card">
+        <h3>Resultados</h3>
+        <div class="results">
+          <p id="out_mru_x0">Posición inicial: —</p>
+          <p id="out_mru_xf">Posición final: —</p>
+          <p id="out_mru_v">Velocidad v: — m/s</p>
+          <p id="out_mru_t">Tiempo total Δt: — s</p>
+          <p class="note">Cronómetro: <span id="cron">0.00 s</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="track-wrap">
+      <div class="track" id="track">
+        <div class="marks" id="marks"></div>
+        <div class="car" id="car" style="left:var(--margin-px)">
+          <div class="body"></div>
+          <div class="win"></div>
+          <div class="wheel front"></div>
+          <div class="wheel back"></div>
+          <div class="light"></div>
+        </div>
+      </div>
+
+      <div id="chartWrap">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- MRUV -->
+  <div id="mruv" class="section" style="display:none">
+    <div class="row">
+      <div class="card">
+        <h3>Ingresa los datos (MRUV)</h3>
+        <label>Tiempo inicial t₀ (s)</label><input id="mruv_t0" type="number" step="any" value="0">
+        <label>Tiempo final t_f (s)</label><input id="mruv_tf" type="number" step="any" value="5">
+        <label>Posición inicial x₀ (m)</label><input id="mruv_x0" type="number" step="any" value="0">
+        <label>Posición final x_f (m)</label><input id="mruv_xf" type="number" step="any" value="20">
+        <label>Velocidad (m/s)</label><input id="mruv_v" type="number" step="any" value="0">
+        <button id="btnCalcMRUV" onclick="calcMRUV()">Calcular</button>
+        <button class="secondary" onclick="resetAll()">Limpiar</button>
+        <button id="btnStartMRUV" onclick="startSimMRUV()" disabled>Iniciar simulación</button>
+      </div>
+
+      <div class="card">
+        <h3>Resultados</h3>
+        <div class="results">
+          <p id="out_mruv_x0">Posición inicial: —</p>
+          <p id="out_mruv_xf">Posición final: —</p>
+          <p id="out_mruv_v0">Velocidad inicial: — m/s</p>
+          <p id="out_mruv_a">Aceleración: — m/s²</p>
+          <p id="out_mruv_tf">Tiempo total Δt: — s</p>
+          <p class="note">Cronómetro: <span id="cron2">0.00 s</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="track-wrap">
+      <div class="track" id="track2">
+        <div class="marks" id="marks2"></div>
+        <div class="car" id="car2" style="left:var(--margin-px)">
+          <div class="body"></div>
+          <div class="win"></div>
+          <div class="wheel front"></div>
+          <div class="wheel back"></div>
+          <div class="light"></div>
+        </div>
+      </div>
+
+      <div id="chartWrap2">
+        <canvas id="chart2"></canvas>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <script>
+const CAR_W = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--car-w')) || 80;
+const MARGIN_PX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--margin-px')) || 60;
+let ctxChart = null, ctxChart2 = null, animating = false, rafId = null;
+
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  document.querySelectorAll('header nav a').forEach(a=>a.classList.remove('active'));
+  if(id==='inicio') document.getElementById('navInicio').classList.add('active');
+  if(id==='mru') document.getElementById('navMRU').classList.add('active');
+  if(id==='mruv') document.getElementById('navMRUV').classList.add('active');
+  if(id==='desarrolladores') document.getElementById('navDesarrolladores').classList.add('active');
+}
+
+function drawMarks(containerMarksEl, trackEl, x0, xf){
+  containerMarksEl.innerHTML = '';
+  const trackWidth = trackEl.clientWidth;
+  const usable = trackWidth - 2*MARGIN_PX;
+  const marks = 10;
+  for(let i=0;i<=marks;i++){
+    const div = document.createElement('div');
+    div.className='mark';
+    const pos = MARGIN_PX + i*(usable/marks);
+    div.style.left=pos+'px';
+    containerMarksEl.appendChild(div);
+    const label = document.createElement('div');
+    label.className='markLabel';
+    label.style.left=pos+'px';
+    const val = x0 + (xf-x0)*(i/marks);
+    label.textContent = val.toFixed(1);
+    containerMarksEl.appendChild(label);
+  }
+}
+
+function calcMRU(){
+  const x0=parseFloat(document.getElementById('mru_x0').value)||0;
+  const xf=parseFloat(document.getElementById('mru_xf').value)||0;
+  const t0=parseFloat(document.getElementById('mru_t0').value)||0;
+  const tf=parseFloat(document.getElementById('mru_tf').value)||0;
+  const v=parseFloat(document.getElementById('mru_v').value)||((xf-x0)/(tf-t0)||0);
+
+  document.getElementById('out_mru_x0').textContent='Posición inicial: '+x0;
+  document.getElementById('out_mru_xf').textContent='Posición final: '+xf;
+  document.getElementById('out_mru_v').textContent='Velocidad v: '+v.toFixed(2)+' m/s';
+  document.getElementById('out_mru_t').textContent='Tiempo total Δt: '+(tf-t0).toFixed(2)+' s';
+  document.getElementById('btnStartMRU').disabled=false;
+
+  drawMarks(document.getElementById('marks'), document.getElementById('track'), x0, xf);
+
+  const dataT=[], dataX=[];
+  const steps = 100;
+  for(let i=0;i<=steps;i++){
+    const t = t0 + (tf-t0)*(i/steps);
+    const x = x0 + v*(t-t0);
+    dataT.push(t);
+    dataX.push(x);
+  }
+  if(ctxChart) ctxChart.destroy();
+  const canvas=document.getElementById('chart');
+  ctxChart = new Chart(canvas,{
+    type:'line',
+    data:{labels:dataT,datasets:[{label:'Posición (m)',data:dataX,borderColor:'#e84c3d',fill:false},{label:'Tiempo (s)',data:dataT,borderColor:'#0b63c6',fill:false}]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'Tiempo (s)'}},y:{title:{display:true,text:'Distancia (m)'}}}}
+  });
+}
+
+function calcMRUV(){
+  const t0=parseFloat(document.getElementById('mruv_t0').value)||0;
+  const tf=parseFloat(document.getElementById('mruv_tf').value)||0;
+  const x0=parseFloat(document.getElementById('mruv_x0').value)||0;
+  const xf=parseFloat(document.getElementById('mruv_xf').value)||0;
+  const v=parseFloat(document.getElementById('mruv_v').value)||0;
+  const a=(tf-t0)?2*(xf-x0-v*(tf-t0))/((tf-t0)**2):0;
+
+  document.getElementById('out_mruv_x0').textContent='Posición inicial: '+x0;
+  document.getElementById('out_mruv_xf').textContent='Posición final: '+xf;
+  document.getElementById('out_mruv_v0').textContent='Velocidad inicial: '+v.toFixed(2)+' m/s';
+  document.getElementById('out_mruv_a').textContent='Aceleración: '+a.toFixed(2)+' m/s²';
+  document.getElementById('out_mruv_tf').textContent='Tiempo total Δt: '+(tf-t0).toFixed(2)+' s';
+  document.getElementById('btnStartMRUV').disabled=false;
+
+  drawMarks(document.getElementById('marks2'), document.getElementById('track2'), x0, xf);
+
+  const dataT=[], dataX=[];
+  const steps=100;
+  for(let i=0;i<=steps;i++){
+    const t=t0 + (tf-t0)*(i/steps);
+    const x=x0 + v*(t-t0) + 0.5*a*(t-t0)*(t-t0);
+    dataT.push(t);
+    dataX.push(x);
+  }
+  if(ctxChart2) ctxChart2.destroy();
+  const canvas=document.getElementById('chart2');
+  ctxChart2=new Chart(canvas,{
+    type:'line',
+    data:{labels:dataT,datasets:[{label:'Posición (m)',data:dataX,borderColor:'#e84c3d',fill:false},{label:'Tiempo (s)',data:dataT,borderColor:'#0b63c6',fill:false}]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'Tiempo (s)'}},y:{title:{display:true,text:'Distancia (m)'}}}}
+  });
+}
+
+// ANIMACIÓN CORREGIDA: carrito centrado en las posiciones x0 → xf
+function startSimMRU(){
+  if(animating){cancelAnimationFrame(rafId); animating=false; return;}
+  const car = document.getElementById('car');
+  const track = document.getElementById('track');
+  const x0 = parseFloat(document.getElementById('mru_x0').value)||0;
+  const xf = parseFloat(document.getElementById('mru_xf').value)||0;
+  const t0 = parseFloat(document.getElementById('mru_t0').value)||0;
+  const tf = parseFloat(document.getElementById('mru_tf').value)||1;
+  const v = parseFloat(document.getElementById('mru_v').value)||((xf-x0)/(tf-t0)||0);
+
+  const trackWidth = track.clientWidth;
+  const usable = trackWidth - 2*MARGIN_PX;
+  
+  // Ajuste para centrar el carrito en las posiciones
+  const startLeft = MARGIN_PX - CAR_W/2;
+  const endLeft = MARGIN_PX + usable * ((xf-x0)/(xf-x0||(xf==x0?1:xf-x0))) - CAR_W/2;
+  
+  let startTime=null;
+
+  function animate(timestamp){
+    if(!startTime) startTime=timestamp;
+    const elapsed=(timestamp-startTime)/1000;
+    const total= tf-t0 || 1;
+    const ratio=elapsed/total;
+    if(ratio>1){
+      car.style.left = startLeft + 'px'; // regresa al inicio
+      animating=false;
+      return;
+    }
+    car.style.left = startLeft + (endLeft-startLeft)*ratio + 'px';
+    document.getElementById('cron').textContent=elapsed.toFixed(2)+' s';
+    rafId=requestAnimationFrame(animate);
+  }
+  animating=true;
+  requestAnimationFrame(animate);
+}
+
+function resetAll(){
+  document.querySelectorAll('input[type=number]').forEach(i=>i.value='');
+  document.querySelectorAll('.results p').forEach(p=>{
+    if(!p.classList.contains('note')) p.textContent=p.textContent.split(':')[0]+': —';
+  });
+  document.getElementById('cron').textContent='0.00 s';
+  document.getElementById('cron2').textContent='0.00 s';
+  document.getElementById('btnStartMRU').disabled=true;
+  document.getElementById('btnStartMRUV').disabled=true;
+  document.getElementById('car').style.left=MARGIN_PX+'px';
+  document.getElementById('car2').style.left=MARGIN_PX+'px';
+  document.getElementById('marks').innerHTML='';
+  document.getElementById('marks2').innerHTML='';
+  if(ctxChart) ctxChart.destroy(); ctxChart=null;
+  if(ctxChart2) ctxChart2.destroy(); ctxChart2=null;
+}
+</script>
+</body>
+</html>
