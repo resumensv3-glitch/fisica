@@ -152,111 +152,122 @@ function drawMarks(containerMarksEl, trackEl, x0, xf){
   }
 }
 
+// ==== MRU corregido ====
 function calcMRU(){
-  const x0=parseFloat(document.getElementById('mru_x0').value)||0;
-  const xf=parseFloat(document.getElementById('mru_xf').value)||0;
-  const t0=parseFloat(document.getElementById('mru_t0').value)||0;
-  const tf=parseFloat(document.getElementById('mru_tf').value)||0;
-  const v=parseFloat(document.getElementById('mru_v').value)||((xf-x0)/(tf-t0)||0);
+  const x0 = parseFloat(document.getElementById('mru_x0').value) || 0;
+  const t0 = parseFloat(document.getElementById('mru_t0').value) || 0;
+  const tf = parseFloat(document.getElementById('mru_tf').value) || 0;
+  let v = parseFloat(document.getElementById('mru_v').value);
+  let xf = parseFloat(document.getElementById('mru_xf').value);
 
-  document.getElementById('out_mru_x0').textContent='Posición inicial: '+x0;
-  document.getElementById('out_mru_xf').textContent='Posición final: '+xf;
-  document.getElementById('out_mru_v').textContent='Velocidad v: '+v.toFixed(2)+' m/s';
-  document.getElementById('out_mru_t').textContent='Tiempo total Δt: '+(tf-t0).toFixed(2)+' s';
-  document.getElementById('btnStartMRU').disabled=false;
+  // Si no hay posición final, la calculamos usando MRU
+  if(isNaN(xf) || xf === 0){
+    const tiempo = tf - t0;
+    if(!isNaN(v) && tiempo > 0){
+      xf = x0 + v * tiempo;
+      document.getElementById('mru_xf').value = xf.toFixed(2);
+    }
+  }
 
+  // Si no hay velocidad, se calcula
+  if(isNaN(v) || v === 0){
+    v = (xf - x0) / ((tf - t0) || 1);
+    document.getElementById('mru_v').value = v.toFixed(2);
+  }
+
+  const distancia = xf - x0;
+
+  document.getElementById('out_mru_x0').textContent = 'Posición inicial: ' + x0 + ' m';
+  document.getElementById('out_mru_xf').textContent = 'Posición final: ' + xf.toFixed(2) + ' m';
+  document.getElementById('out_mru_v').textContent = 'Velocidad v: ' + v.toFixed(2) + ' m/s';
+  document.getElementById('out_mru_t').textContent = 'Tiempo total Δt: ' + (tf - t0).toFixed(2) + ' s';
+  document.getElementById('btnStartMRU').disabled = false;
+
+  // Dibuja la pista ajustada a la distancia
   drawMarks(document.getElementById('marks'), document.getElementById('track'), x0, xf);
 
-  const dataT=[], dataX=[];
+  // Grafica
+  const dataT = [], dataX = [];
   const steps = 100;
-  for(let i=0;i<=steps;i++){
-    const t = t0 + (tf-t0)*(i/steps);
-    const x = x0 + v*(t-t0);
+  for (let i = 0; i <= steps; i++) {
+    const t = t0 + (tf - t0) * (i / steps);
+    const x = x0 + v * (t - t0);
     dataT.push(t);
     dataX.push(x);
   }
-  if(ctxChart) ctxChart.destroy();
-  const canvas=document.getElementById('chart');
-  ctxChart = new Chart(canvas,{
-    type:'line',
-    data:{labels:dataT,datasets:[{label:'Posición (m)',data:dataX,borderColor:'#e84c3d',fill:false},{label:'Tiempo (s)',data:dataT,borderColor:'#0b63c6',fill:false}]},
-    options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'Tiempo (s)'}},y:{title:{display:true,text:'Distancia (m)'}}}}
+
+  if (ctxChart) ctxChart.destroy();
+  const canvas = document.getElementById('chart');
+  ctxChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: dataT,
+      datasets: [{
+        label: 'Posición (m)',
+        data: dataX,
+        borderColor: '#e84c3d',
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { title: { display: true, text: 'Tiempo (s)' } },
+        y: { title: { display: true, text: 'Distancia (m)' } }
+      }
+    }
   });
 }
 
-function calcMRUV(){
-  const t0=parseFloat(document.getElementById('mruv_t0').value)||0;
-  const tf=parseFloat(document.getElementById('mruv_tf').value)||0;
-  const x0=parseFloat(document.getElementById('mruv_x0').value)||0;
-  const xf=parseFloat(document.getElementById('mruv_xf').value)||0;
-  const v=parseFloat(document.getElementById('mruv_v').value)||0;
-  const a=(tf-t0)?2*(xf-x0-v*(tf-t0))/((tf-t0)**2):0;
 
-  document.getElementById('out_mruv_x0').textContent='Posición inicial: '+x0;
-  document.getElementById('out_mruv_xf').textContent='Posición final: '+xf;
-  document.getElementById('out_mruv_v0').textContent='Velocidad inicial: '+v.toFixed(2)+' m/s';
-  document.getElementById('out_mruv_a').textContent='Aceleración: '+a.toFixed(2)+' m/s²';
-  document.getElementById('out_mruv_tf').textContent='Tiempo total Δt: '+(tf-t0).toFixed(2)+' s';
-  document.getElementById('btnStartMRUV').disabled=false;
-
-  drawMarks(document.getElementById('marks2'), document.getElementById('track2'), x0, xf);
-
-  const dataT=[], dataX=[];
-  const steps=100;
-  for(let i=0;i<=steps;i++){
-    const t=t0 + (tf-t0)*(i/steps);
-    const x=x0 + v*(t-t0) + 0.5*a*(t-t0)*(t-t0);
-    dataT.push(t);
-    dataX.push(x);
-  }
-  if(ctxChart2) ctxChart2.destroy();
-  const canvas=document.getElementById('chart2');
-  ctxChart2=new Chart(canvas,{
-    type:'line',
-    data:{labels:dataT,datasets:[{label:'Posición (m)',data:dataX,borderColor:'#e84c3d',fill:false},{label:'Tiempo (s)',data:dataT,borderColor:'#0b63c6',fill:false}]},
-    options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'Tiempo (s)'}},y:{title:{display:true,text:'Distancia (m)'}}}}
-  });
-}
-
-// ANIMACIÓN CORREGIDA: carrito centrado en las posiciones x0 → xf
+// ==== Simulación corregida: detiene cronómetro ====
 function startSimMRU(){
-  if(animating){cancelAnimationFrame(rafId); animating=false; return;}
+  if(animating){ cancelAnimationFrame(rafId); animating = false; return; }
+
   const car = document.getElementById('car');
   const track = document.getElementById('track');
-  const x0 = parseFloat(document.getElementById('mru_x0').value)||0;
-  const xf = parseFloat(document.getElementById('mru_xf').value)||0;
-  const t0 = parseFloat(document.getElementById('mru_t0').value)||0;
-  const tf = parseFloat(document.getElementById('mru_tf').value)||1;
-  const v = parseFloat(document.getElementById('mru_v').value)||((xf-x0)/(tf-t0)||0);
+  const x0 = parseFloat(document.getElementById('mru_x0').value) || 0;
+  const xf = parseFloat(document.getElementById('mru_xf').value) || 0;
+  const t0 = parseFloat(document.getElementById('mru_t0').value) || 0;
+  const tf = parseFloat(document.getElementById('mru_tf').value) || 1;
 
   const trackWidth = track.clientWidth;
-  const usable = trackWidth - 2*MARGIN_PX;
-  
-  // Ajuste para centrar el carrito en las posiciones
-  const startLeft = MARGIN_PX - CAR_W/2;
-  const endLeft = MARGIN_PX + usable * ((xf-x0)/(xf-x0||(xf==x0?1:xf-x0))) - CAR_W/2;
-  
-  let startTime=null;
+  const usable = trackWidth - 2 * MARGIN_PX;
+  const startLeft = MARGIN_PX;
+  const endLeft = MARGIN_PX + usable - CAR_W;
+
+  let startTime = null;
+  document.getElementById('cron').textContent = '0.00 s';
 
   function animate(timestamp){
-    if(!startTime) startTime=timestamp;
-    const elapsed=(timestamp-startTime)/1000;
-    const total= tf-t0 || 1;
-    const ratio=elapsed/total;
-    if(ratio>1){
-      car.style.left = startLeft + 'px'; // regresa al inicio
-      animating=false;
+    if(!startTime) startTime = timestamp;
+    const elapsed = (timestamp - startTime) / 1000;
+    const total = tf - t0 || 1;
+    const ratio = elapsed / total;
+
+    if(ratio >= 1){
+      car.style.left = endLeft + 'px';
+      document.getElementById('cron').textContent = total.toFixed(2) + ' s';
+      cancelAnimationFrame(rafId);
+      animating = false;
       return;
     }
-    car.style.left = startLeft + (endLeft-startLeft)*ratio + 'px';
-    document.getElementById('cron').textContent=elapsed.toFixed(2)+' s';
-    rafId=requestAnimationFrame(animate);
+
+    car.style.left = startLeft + (endLeft - startLeft) * ratio + 'px';
+    document.getElementById('cron').textContent = elapsed.toFixed(2) + ' s';
+    rafId = requestAnimationFrame(animate);
   }
-  animating=true;
-  requestAnimationFrame(animate);
+
+  animating = true;
+  rafId = requestAnimationFrame(animate);
 }
 
+
+// ==== Reset corregido ====
 function resetAll(){
+  cancelAnimationFrame(rafId);
+  animating = false;
   document.querySelectorAll('input[type=number]').forEach(i=>i.value='');
   document.querySelectorAll('.results p').forEach(p=>{
     if(!p.classList.contains('note')) p.textContent=p.textContent.split(':')[0]+': —';
